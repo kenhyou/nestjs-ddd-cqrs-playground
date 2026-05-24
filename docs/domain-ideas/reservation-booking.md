@@ -13,7 +13,7 @@ A system for reserving resources such as rooms, lodging, or equipment for time s
 
 DDD learning value: `DateRange` domain methods such as `overlaps()`, `contains()`, and `durationMinutes()`, Cross-BC Port patterns where Reservation reads Room data, and a state machine from PENDING to CONFIRMED to CHECKED_IN to CHECKED_OUT or CANCELLED.
 
-Reference example: `docs/reservation-management/` contains an in-progress intermediate implementation.
+For a more meeting-room-specific take on the same mechanics, see [reservation-management.md](reservation-management.md).
 
 ## Universal Actors
 

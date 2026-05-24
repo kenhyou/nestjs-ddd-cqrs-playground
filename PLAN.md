@@ -6,12 +6,14 @@ Every playthrough follows this 8-phase curriculum. The point is to repeat the sa
 
 ## Domain Ideas with PRD Templates
 
-Each of the seven domains has three pre-written tiers in `docs/domain-ideas/<slug>.md`: basic, intermediate, and advanced.
+Each of the nine domains has three pre-written tiers in `docs/domain-ideas/<slug>.md`: basic, intermediate, and advanced.
 
 | Domain | Slug | Learning Pattern as Tier Increases |
 |---|---|---|
 | **Inventory Management** | `inventory-management` | Product CRUD -> StockMovement history + lock -> stock-reservation Saga and multi-warehouse |
+| **Order Management** | `order-management` | Order + OrderItem (Root + child Entity) -> Order + Payment Aggregates with Cross-BC Port -> Order/Payment/Shipment Saga with outbox |
 | **Reservation / Booking** | `reservation-booking` | Room CRUD -> time range + Cross-BC -> separate Check-In/Out BC and notification events |
+| **Reservation Management** | `reservation-management` | Single Reservation with inline conflict check -> Room + Reservation across 2 BCs with Cross-BC Port and Domain Service -> Check-In/Out + Notification BCs with no-show Saga |
 | **Subscription Billing** | `subscription-billing` | Subscription start/cancel -> Invoice state machine -> Payment Saga and dunning |
 | **Forum / Q&A** | `forum-qa` | Question CRUD -> Answer + Vote policy -> Reputation BC and Moderation BC |
 | **Task Tracker** | `task-tracker` | Task CRUD -> Project + authorization -> workflow engine and Notification BC |

@@ -19,7 +19,7 @@ nestjs/                            # learning platform root
 |-- PLAN.md                        # 8-phase curriculum and tier model
 |-- PROGRESS.md                    # playthrough status index
 |-- docs/                          # learning materials tracked by Git
-|   `-- domain-ideas/              # PRD template repository: 7 domains x 3 tiers
+|   `-- domain-ideas/              # PRD template repository: 9 domains x 3 tiers
 |       |-- README.md
 |       |-- _template.md
 |       |-- inventory-management.md
@@ -45,7 +45,7 @@ nestjs/                            # learning platform root
 When starting a new domain session:
 
 1. **Trigger**: the user says something like "start DDD learning", "start a new domain", or "start learning".
-2. **Choose domain**: Claude presents the seven options in `docs/domain-ideas/`.
+2. **Choose domain**: Claude presents the nine options in `docs/domain-ideas/`.
 3. **Choose tier**: basic, intermediate, or advanced.
    - **Basic**: 1 Aggregate, linear state transition, single BC.
    - **Intermediate**: 2 Aggregates, 1-2 BCs, cross-aggregate validation, Domain Service.

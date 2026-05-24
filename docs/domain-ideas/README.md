@@ -11,7 +11,9 @@ docs/domain-ideas/
 |-- README.md
 |-- _template.md
 |-- inventory-management.md
+|-- order-management.md
 |-- reservation-booking.md
+|-- reservation-management.md
 |-- subscription-billing.md
 |-- forum-qa.md
 |-- task-tracker.md
@@ -41,7 +43,7 @@ The tier describes the **learning scope**, not the inherent difficulty of the do
 ## Learning Flow
 
 1. The user triggers a new learning session.
-2. Claude presents the seven options in `docs/domain-ideas/`.
+2. Claude presents the nine options in `docs/domain-ideas/`.
 3. The user chooses a domain and tier: basic, intermediate, or advanced.
 4. Claude creates `workspace/<idea-slug>-<tier>/product-requirements.md`.
 5. The user reviews or edits the PRD.

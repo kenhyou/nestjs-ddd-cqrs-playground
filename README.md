@@ -25,7 +25,7 @@ nestjs/                                # Platform root
 ├── PLAN.md                            # 8-phase curriculum + tier model + pass criteria
 ├── PROGRESS.md                        # Playthrough workflow guide
 ├── docs/
-│   └── domain-ideas/                  # PRD template repo: 7 domains x 3 tiers
+│   └── domain-ideas/                  # PRD template repo: 9 domains x 3 tiers
 ├── .claude/                           # Agent definitions and the strategic-design skill
 └── workspace/                         # [Git-ignored] Playthroughs
     └── <playthrough-name>/            # e.g., inventory-basic, forum-qa-advanced
@@ -49,7 +49,7 @@ graph TD
     D --> E[8-Phase Coding]
 ```
 
-1. **Pick domain + tier** — choose one of seven domains in [docs/domain-ideas/](docs/domain-ideas/) and a tier (Basic / Intermediate / Advanced).
+1. **Pick domain + tier** — choose one of nine domains in [docs/domain-ideas/](docs/domain-ideas/) and a tier (Basic / Intermediate / Advanced).
 2. **Generate PRD** — copy the matching tier section into `workspace/<playthrough>/product-requirements.md`.
 3. **Strategic Design** — run `/strategic-design --prd workspace/<playthrough>/product-requirements.md`. The skill runs a four-role multi-agent debate (Domain Expert, Solution Architect, Tech Lead, Product Owner) and outputs Bounded Contexts, a Context Map, and Ubiquitous Language. You write your own initial BC guess **before** the debate and a "what changed in my thinking" reflection **after**.
 4. **Tactical Design** — write `workspace/<playthrough>/docs/DESIGN.md` covering Aggregate Decisions, Consistency Boundaries per Use Case, Service Placement, Domain Events, Value Objects, State Transitions, Use Cases, Business Rules, and Domain Exceptions. See [PLAN.md](PLAN.md) Phase -1.
@@ -174,5 +174,5 @@ Phase 0 in [PLAN.md](PLAN.md) lists the exact dependencies and the `--save-exact
 - **Curriculum and rules**: [PLAN.md](PLAN.md) — 8 phases, tier pass criteria, Advanced Topics (Transactional Outbox), Shared Architecture Rules.
 - **Workflow guide**: [PROGRESS.md](PROGRESS.md) — how to start a new sub-project.
 - **Agent instructions**: [CLAUDE.md](CLAUDE.md) — how AI agents should collaborate inside this repo, including language conventions.
-- **Domain ideas**: [docs/domain-ideas/](docs/domain-ideas/) — seven domains, three tiers each.
+- **Domain ideas**: [docs/domain-ideas/](docs/domain-ideas/) — nine domains, three tiers each.
 - **Strategic Design skill**: [.claude/skills/strategic-design/](.claude/skills/strategic-design/).

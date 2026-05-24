@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test/Coverage
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Claude Code local user-specific data. Skills and agents are project assets and remain tracked.
+.claude/settings.local.json
+.claude/cache/
+.claude/logs/
+.claude/projects/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database files for local learning projects
+*.sqlite
+*.sqlite3
+*.db
+
+# NestJS
+.nest/
+
+# Learning outputs for each playthrough: PRD, Strategic, Tactical, and code
+/workspace/

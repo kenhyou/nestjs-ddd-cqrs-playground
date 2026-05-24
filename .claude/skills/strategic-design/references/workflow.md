@@ -70,8 +70,9 @@ Phase 0 domain scope or the PRD file.
 
 1. Copy the PRD's five "Pre-baked Discovery Answers" into `<output-dir>/01-discovery.md`.
 2. Show the pre-filled result and ask whether to proceed or edit.
-3. If the user agrees, move to Phase 2.
-4. If the user requests edits, apply only those edits and confirm again.
+3. If the user requests edits, apply only those edits and confirm again.
+4. **Pre-debate BC guess (required):** before Phase 2 begins, ask the user to write their own initial Bounded Context candidate list — name + one-line responsibility for each, three to six entries is typical. Save to `<output-dir>/initial-bc-guess.md` with a timestamp. The PRD's `Suggested BC Candidates` (if any) must not be shown to the user before this step. The user is not allowed to skip — rough guesses are the point; the Phase 6 reflection compares against this file.
+5. Move to Phase 2.
 
 ### Procedure: Socratic Mode
 
@@ -93,9 +94,13 @@ Required questions:
 - key KPIs
 - in-scope and out-of-scope items
 
+PRD mode also writes `<output-dir>/initial-bc-guess.md`:
+- timestamped header
+- 3-6 BC candidates with name + one-line responsibility
+
 ### Exit Condition
 
-- PRD mode: the user confirms the pre-filled discovery result.
+- PRD mode: the user confirms the pre-filled discovery result **and** has written `initial-bc-guess.md`.
 - Socratic mode: the user answers all five questions and the artifact is written.
 
 ### Agents
@@ -271,22 +276,25 @@ All Phase 1-5 artifacts.
    - Bounded Contexts
    - Context Map
    - Ubiquitous Language
-   - reflection section reserved for the user
+   - reflection section reserved for the user, including a **"What changed in my thinking"** subsection (PRD mode)
 2. Ask the three reflection questions from `references/socratic-questions.md`:
    - What decision differed most from your initial intuition?
    - What would you do differently next time?
    - How does this affect Tactical Design (`DESIGN.md`)?
-3. The user writes the reflection directly.
-4. Suggest Tactical handoff: start DESIGN.md by mapping BCs to Aggregates.
+3. **PRD mode only:** open `<output-dir>/initial-bc-guess.md` side by side with the final BC list and ask the user to list, in bullet points, which guesses survived, which were merged or split, and which were renamed and why. This goes into the "What changed in my thinking" subsection.
+4. The user writes the reflection directly.
+5. Suggest Tactical handoff: start DESIGN.md by mapping BCs to Aggregates.
 
 ### Output
 
 - Completed `<output-dir>/STRATEGIC.md` including reflection.
+- PRD mode reflection contains the "What changed in my thinking" comparison against `initial-bc-guess.md`.
 
 ### Exit Condition
 
 - `STRATEGIC.md` is complete.
 - The user has written at least one paragraph of reflection.
+- PRD mode: reflection includes the comparison against `initial-bc-guess.md`.
 
 ### Agents
 

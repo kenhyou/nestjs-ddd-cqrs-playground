@@ -2,6 +2,11 @@
 
 ## Platform Overview
 
+**Purpose**: This project exists for two learning goals:
+
+1. **DDD learning** — practicing Strategic Design (Bounded Context, Context Map, Ubiquitous Language, Subdomain classification) and Tactical Design (Aggregate, Entity, Value Object, Domain Service, Domain Event) across multiple domains.
+2. **NestJS learning** — practicing NestJS application structure together with CQRS and four-layer architecture (presenters / application / domain / infra).
+
 A learning platform for practicing NestJS, CQRS, and four-layer DDD architecture by applying the same pattern across multiple domains. Each learning session, called a **playthrough**, follows the same workflow: choose a domain idea and tier -> generate a PRD -> Strategic Design -> Tactical Design -> 8-phase coding.
 
 Learning outputs such as PRD, Strategic Design, Tactical Design, and code are isolated under `workspace/`, which is ignored by Git. The same domain can be repeated with different tiers or different design choices.
@@ -12,22 +17,18 @@ Learning outputs such as PRD, Strategic Design, Tactical Design, and code are is
 nestjs/                            # learning platform root
 |-- CLAUDE.md                      # this document
 |-- PLAN.md                        # 8-phase curriculum and tier model
-|-- PROGRESS.md                    # reference example index
+|-- PROGRESS.md                    # playthrough status index
 |-- docs/                          # learning materials tracked by Git
-|   |-- domain-ideas/              # PRD template repository: 7 domains x 3 tiers
-|   |   |-- README.md
-|   |   |-- _template.md
-|   |   |-- inventory-management.md
-|   |   |-- reservation-booking.md
-|   |   |-- subscription-billing.md
-|   |   |-- forum-qa.md
-|   |   |-- task-tracker.md
-|   |   |-- library-loan.md
-|   |   `-- membership-loyalty.md
-|   |-- order-management/          # reference example with completed DESIGN/PROGRESS docs
-|   `-- reservation-management/    # reference example with Strategic and Tactical docs
-|-- order-management/              # reference code: completed NestJS app
-|-- reservation-management/        # reference code: multi-aggregate pattern
+|   `-- domain-ideas/              # PRD template repository: 7 domains x 3 tiers
+|       |-- README.md
+|       |-- _template.md
+|       |-- inventory-management.md
+|       |-- reservation-booking.md
+|       |-- subscription-billing.md
+|       |-- forum-qa.md
+|       |-- task-tracker.md
+|       |-- library-loan.md
+|       `-- membership-loyalty.md
 `-- workspace/                     # learning outputs ignored by Git
     `-- <playthrough>/             # e.g. inventory-basic or forum-qa-advanced
         |-- product-requirements.md
@@ -59,17 +60,7 @@ When starting a new domain session:
 
 Important rules:
 - All learning outputs stay under `workspace/`, which is Git-ignored.
-- Reference examples live in `order-management/` and `reservation-management/`.
 - `docs/domain-ideas/<idea>.md` contains domain information and pre-baked answers for all three tiers.
-
-## Reference Implementations
-
-| Name | Domain | Learning Pattern | Status |
-|---|---|---|---|
-| `order-management` | Order management | Single BC, Order/OrderItem (Root + child Entity) | Complete |
-| `reservation-management` | Room reservation | 2 BCs, Cross-BC Port, Domain Service | In progress, for reference |
-
-New learning work happens under `workspace/`. The examples above are pattern references only.
 
 ## Collaboration Style
 
@@ -77,13 +68,19 @@ New learning work happens under `workspace/`. The examples above are pattern ref
 - After each step, the user runs verification commands and shares results for feedback.
 - Support order: hint first, then more specific guidance, then code if needed.
 
+## Documentation Language
+
+- **Git-tracked documents** (anything outside `workspace/`, including `CLAUDE.md`, `PLAN.md`, `PROGRESS.md`, and `docs/**`) must be written in English.
+- **Workspace documents** (anything under `workspace/<playthrough>/`, such as PRD, Strategic Design output, `DESIGN.md`, `PROGRESS.md`) follow the user's working language.
+- Code identifiers, file paths, and technical terms stay in their original form regardless of document language.
+
 ## Progress
 
 Track sub-project progress with checkboxes in `PROGRESS.md`.
 
 ## Learning Plan
 
-See `PLAN.md` for the 8-phase curriculum and next domain candidates.
+See `PLAN.md` for the 8-phase curriculum and next domain candidates. Each phase now includes a **Tests for This Layer** and a **NestJS Checkpoint** subsection, and each tier in the Three Tiers section lists explicit **Pass Criteria**.
 
 ## Strategic Design Skill
 
@@ -115,12 +112,15 @@ Dependencies flow from top to bottom. Infrastructure implements Ports defined in
 - No `infra/` imports inside `application/`.
 - Ports are `abstract class` values so they can be used as runtime DI tokens.
 - A module is the only place where a Port is bound to an implementation.
+- Transaction context propagates via CLS or decorator (e.g., `typeorm-transactional`'s `@Transactional()`), never as a `manager` / `QueryRunner` parameter passed from `application/` to `infra/`.
+- The Query path bypasses the domain layer: Query Handlers depend on `XxxQueryPort` and return Read Model DTOs read directly from the ORM. Never call `reconstitute()` from a Query Handler.
+- Between BC modules, dependencies are unidirectional or event-driven. `forwardRef()` is a smell, not a tool.
 
 ## Code Conventions
 
 ### Domain Class Method Order
 
-Aggregate Roots and Entities under `domain/models/` follow this order, based on `order-management/order.model.ts`.
+Aggregate Roots and Entities under `domain/models/` follow this order.
 
 1. **Field declaration** through `private constructor` parameter properties.
 2. **Static factories** such as `static create()` and `static reconstitute()`.

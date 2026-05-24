@@ -128,6 +128,17 @@ Cases where the same word has different meanings across BCs. This is a core Stra
 
 ## 6. Learning Reflection, Written by User
 
+### What Changed in My Thinking (PRD mode only)
+
+Compare the final BCs in section 3 against `initial-bc-guess.md` (written before Phase 2). List, in bullets:
+
+- Guesses that **survived** as-is.
+- Guesses that were **merged** into one BC or **split** into multiple — and why.
+- Guesses that were **renamed** — and what the new name captures that the old one missed.
+- BCs that emerged that were **not in the initial guess** — what made them visible.
+
+{Written directly by the user. AI must not ghostwrite this.}
+
 ### Q1. One decision most different from your initial intuition
 
 {Written directly by the user. AI must not ghostwrite this.}
@@ -146,6 +157,7 @@ Cases where the same word has different meanings across BCs. This is a core Stra
 
 - Phase notes:
   - [01-discovery.md](01-discovery.md) -- Phase 1
+  - [initial-bc-guess.md](initial-bc-guess.md) -- Phase 1 (PRD mode only; user's pre-debate BC guess)
   - [02-subdomains.md](02-subdomains.md) -- Phase 2
   - [03-bounded-contexts.md](03-bounded-contexts.md) -- Phase 3
   - [04-context-map.md](04-context-map.md) -- Phase 4

@@ -33,6 +33,7 @@ A learning skill for running DDD Strategic Design through multi-role debate. Whe
 
 - The reflection section in Phase 6 is not ghostwritten by AI.
 - Even a short reflection must be typed by the user.
+- In PRD mode, the reflection must include a **"What changed in my thinking"** bullet list comparing `initial-bc-guess.md` (written in step 6 of PRD entry) to the final BCs in `STRATEGIC.md`. At minimum: which guesses survived, which were merged or split, and which were renamed and why.
 
 ---
 
@@ -92,9 +93,15 @@ When the user uses a trigger phrase, determine the mode first.
 5. **Confirm pre-filled discovery**
    - Copy PRD content into `01-discovery.md`.
    - Show it once and ask whether to proceed or edit.
-   - If the user agrees, Phase 0/1 ends and Phase 2 begins.
+   - If the user agrees, Phase 0/1 ends.
 
-6. **Shortened validation mode**
+6. **Initial BC candidates (pre-debate)**
+   - **Required before Phase 2 starts.** Ask the user to list their own initial Bounded Context guesses: name + one-line responsibility each. Three to six entries is typical.
+   - Save the list to `workspace/<playthrough>/docs/strategic-design/initial-bc-guess.md` with a timestamp.
+   - Do not let the user skip this step. If they say "I don't know", ask them to write down even rough guesses — being wrong here is the point. The post-debate reflection compares against this file.
+   - The PRD's `Suggested BC Candidates`, if any, must not be shown to the user before they write their own guess.
+
+7. **Shortened validation mode**
    - If Suggested BC Candidates exist, shorten Phases 1 and 2 as validation, but do not skip them.
 
 ### Socratic Mode Entry

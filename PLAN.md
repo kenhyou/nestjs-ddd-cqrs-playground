@@ -37,8 +37,33 @@ Examples:
 
 Selection guidance:
 - Start with **basic** if this is the first attempt.
-- After completing `order-management`, try **intermediate** to learn Cross-BC Port and Domain Service patterns.
+- After finishing one Basic playthrough, try **intermediate** to learn Cross-BC Port and Domain Service patterns.
 - Attempt **advanced** after becoming comfortable with Saga and Domain Events.
+
+### Pass Criteria
+
+A tier is "complete" when you can demonstrate all of the following. Treat this as the signal to move on, not a grade.
+
+**Basic pass:**
+- VO and Aggregate Root tests run with **zero NestJS or TypeORM imports** in `domain/`.
+- At least one happy-path e2e test and one invariant-violation e2e test exist.
+- **Query Handler does not call `reconstitute()` or Mapper** — the read path bypasses the domain layer.
+- You can explain in one sentence each: why the Aggregate boundary is where it is, and what invariant the state-transition methods protect.
+
+**Intermediate pass:**
+- All Basic criteria.
+- DESIGN.md "Service Placement" section is filled in and states **where each cross-Aggregate policy lives** (Domain Service vs Application Service) **and why**.
+- Cross-BC Port is wired in **exactly one module**; no module imports another BC's `infra/`.
+- A use case writes to two or more repositories under a single `@Transactional()` boundary; **`application/` code contains no `EntityManager`, `QueryRunner`, or `dataSource.transaction(...)` calls**.
+- Composite VO (e.g., DateRange) has its own tests for overlap/contains/equality semantics.
+
+**Advanced pass:**
+- All Intermediate criteria.
+- At least one Domain Event has a documented **failure policy** and **idempotency key** in DESIGN.md.
+- At least one Domain Event uses the **outbox publish mechanism**: the event row is inserted in the same DB transaction as the Aggregate change, and a relay delivers it asynchronously.
+- At least one Saga path is tested for both **retry** and **duplicate event delivery**.
+- No `forwardRef()` is used to break BC module cycles — shared abstractions or events are used instead.
+- You can explain the eventual-consistency boundary: what state can briefly disagree across BCs, and how the system converges.
 
 ---
 
@@ -91,6 +116,50 @@ PENDING -> CONFIRMED -> SHIPPED -> DELIVERED
 | POST | /orders | Create |
 | GET | /orders/:id | Get one |
 
+## Aggregate Decisions
+For each Aggregate Root, document:
+- **Invariants protected in one transaction**: what rules must always hold together when this Aggregate is saved.
+- **Boundary rationale**: why this boundary and not a wider split (one big root) or a narrower split (separate roots).
+
+| Aggregate Root | Invariants in One Transaction | Why This Boundary |
+|---|---|---|
+| Order | total = sum(items.price * qty); status transitions follow allowed graph | OrderItem has no meaning outside an Order; same-transaction recompute of total |
+
+## Consistency Boundaries per Use Case
+| Use Case | Aggregates Modified | Boundary | Notes |
+|---|---|---|---|
+| Create Order | Order | strong | single Aggregate, one transaction |
+| Confirm Order | Order | strong | state transition only |
+| Reserve Stock on Order Confirm | Order, Inventory | eventual | cross-BC, compensation on failure |
+
+Boundary values: `strong` (single transaction), `eventual` (separate transactions linked by Domain Event), `compensation` (Saga undo step required).
+
+## Service Placement
+Required for Intermediate and Advanced tiers. Basic tier may omit this section.
+
+For each non-trivial behavior, state which layer owns it and why. Use the decision tree in PLAN.md Phase 2.6.
+
+| Behavior | Location | Reason |
+|---|---|---|
+| Order state transition (PENDING -> CONFIRMED) | Domain Method (`Order.confirm`) | involves one Aggregate only |
+| Reservation overlap check across all reservations for a Room | Domain Service (`ReservationConflictChecker`) | needs state from multiple Reservation Aggregates |
+| Charge a customer's card when Order confirms | Application Service / Command Handler | orchestration, calls external system, no rule |
+
+## Domain Events
+Required for Intermediate and Advanced tiers. Basic tier may omit this section.
+
+| Event | Publisher BC | Subscriber BC | Publish Mechanism | Failure Policy | Idempotency Key |
+|---|---|---|---|---|---|
+| OrderConfirmed | Order | Inventory | in-process | retry 3x, then dead-letter | orderId |
+| OrderConfirmed | Order | Notification | outbox | retry 3x, then dead-letter | orderId |
+
+Publish Mechanism options:
+- `in-process` — Basic/Intermediate only; in-memory `EventBus` within the same transaction *commit boundary* (still subject to the dual-write problem if subscribers do I/O).
+- `outbox` — Advanced tier default; event row written in the same DB transaction as the Aggregate change, relay publishes asynchronously. See PLAN.md "Advanced Topics > Transactional Outbox".
+- `external broker` — sketch only; out of scope for this curriculum.
+
+Failure policy options: `retry N times`, `dead-letter`, `manual review`, `compensating action`. Idempotency key must be derivable from event payload so duplicate delivery is safe.
+
 ## Business Rules
 - Can confirm only from PENDING.
 - Cannot cancel after SHIPPED.
@@ -125,10 +194,14 @@ cd code
 
 ### 0.2 Install Dependencies
 
+Use `--save-exact` (or `npm config set save-exact true` once per machine) so versions are pinned, not caret ranges. The "pin versions" rule in the NestJS Checkpoint below relies on this.
+
 ```bash
-npm install @nestjs/cqrs typeorm @nestjs/typeorm sqlite3 reflect-metadata
-npm install class-validator class-transformer
+npm install --save-exact @nestjs/cqrs @nestjs/config typeorm @nestjs/typeorm typeorm-transactional sqlite3 reflect-metadata
+npm install --save-exact class-validator class-transformer
 ```
+
+`@nestjs/config` powers `ConfigModule` (see NestJS Checkpoint). `typeorm-transactional` powers the `@Transactional()` decorator used in Phase 3.5.
 
 ### 0.3 Folder Structure
 
@@ -154,6 +227,12 @@ mkdir -p src/<domain>/infra/persistence/orm/{entities,repositories,mappers}
 ```
 
 Add the same pattern to Jest `moduleNameMapper` in `package.json`.
+
+### NestJS Checkpoint
+
+- Add `@nestjs/config` and wrap `ConfigModule.forRoot({ isGlobal: true })` in AppModule.
+- Pin exact versions for `@nestjs/cqrs`, `typeorm`, `@nestjs/typeorm` to avoid surprise upgrades between playthroughs.
+- Confirm `reflect-metadata` is imported once at the top of `main.ts` so decorator metadata works.
 
 ### Verification
 
@@ -191,6 +270,19 @@ npm run start:dev
 - Do not create a separate domain repository interface here.
 - Define repository Ports in Phase 2 under `application/ports`.
 
+### Tests for This Layer
+
+- VO: `create()` rejects invalid input; `equals()` is value-based; no mutation after construction.
+- Aggregate Root: state-transition methods enforce invariants (e.g., cannot confirm twice).
+- Factory: builds a valid Aggregate from raw input; rejects malformed input.
+- No mocks needed — domain tests are pure functions of values.
+
+### NestJS Checkpoint
+
+- `@Injectable()` is the only NestJS import allowed here, used on Factory and Domain Service only.
+- VOs and Aggregate Roots are plain classes; no DI, no scopes, no decorators.
+- If a class in `domain/` needs to call a repository or external system, it does not belong here. Move orchestration to an Application Service in `application/`. Domain Services in `domain/services/` must operate on Aggregates passed in by the Application Service — never inject a repository into them.
+
 ### Verification
 
 ```bash
@@ -206,10 +298,14 @@ rg "from 'typeorm'" src/<domain>/domain/
 **Goal**: split commands and queries with CQRS and define Ports.
 **Learning points**: abstract class as DI token, handlers delegate to domain models.
 
-### 2.1 Port
+### 2.1 Ports (Write and Read)
 
-- `application/ports/<aggregate>.repository.port.ts` as an `abstract class`.
-- Reason: TypeScript interfaces disappear at runtime and cannot be DI tokens.
+Two distinct Port families, both `abstract class`:
+
+- **Repository Port** (write side): `application/ports/<aggregate>.repository.port.ts`. Returns and accepts domain models. Used by Command Handlers.
+- **Query Port** (read side): `application/ports/queries/<read-model>.query.port.ts`. Returns Read Model DTOs directly. Used by Query Handlers.
+
+Reason: TypeScript interfaces disappear at runtime and cannot be DI tokens.
 
 ### 2.2 Commands
 
@@ -220,16 +316,55 @@ rg "from 'typeorm'" src/<domain>/domain/
 
 - Use `@CommandHandler(XxxCommand)`.
 - Pattern: findById -> call domain method -> save.
+- The handler always operates on the Aggregate Root; never reach into Entities directly.
 
-### 2.4 Queries + Handlers
+### 2.4 Queries + Handlers (Domain Bypass)
 
-- Use `@QueryHandler(XxxQuery)`.
-- Specify return type through `IQueryHandler<Query, Result>`.
+True CQRS: the read side does **not** go through domain models. Query Handlers query infrastructure for Read Model DTOs and return them directly.
+
+- Define each query as `XxxQuery` (data container).
+- Define a matching `XxxReadModel` DTO under `application/queries/<read-model>.ts`. This is a plain shape, not a domain class.
+- Define a `XxxQueryPort` (abstract class) with methods that return `XxxReadModel` (or `XxxReadModel[]`).
+- The `@QueryHandler(XxxQuery)` injects the `XxxQueryPort`, calls it, and returns the Read Model. Specify the return type via `IQueryHandler<XxxQuery, XxxReadModel>`.
+- **Never** call `reconstitute()` or use Mapper.toDomain in a Query Handler. If you find yourself doing this, the read path is wrong.
+
+Implementation of the Query Port lives in Phase 3.4.
 
 ### 2.5 Thin Service Facade
 
 - Inject `CommandBus` and `QueryBus`.
 - Keep controllers unaware of handlers.
+
+### 2.6 Service Placement: Application Service vs Domain Service
+
+A frequent source of confusion: business validation drifts into Command Handlers and they balloon. Use this rule to decide where logic lives.
+
+| Layer | Responsibility | Holds Business Rules? |
+|---|---|---|
+| Application Service / Command Handler | Load Aggregate, call domain methods, save, control transaction, call external systems | No |
+| Domain Method (on Aggregate Root) | State transitions and invariants that involve **one** Aggregate | Yes |
+| Domain Service | Business rules that compare or coordinate **multiple** Aggregates and have no natural home on any one of them | Yes |
+
+Decision tree:
+
+1. Can this rule be expressed as a method on a single Aggregate? -> Domain Method.
+2. Does the rule need state from two or more Aggregates (e.g., "this Reservation must not overlap any other Reservation for the same Room")? -> Domain Service.
+3. Is the work purely orchestration — load, call, save, no rule? -> Application Service / Command Handler.
+
+A Domain Service lives in `domain/services/` and is plain TypeScript (no NestJS, except `@Injectable` as the project allows). It must not call Repositories; the Application Service loads the required Aggregates and passes them in.
+
+### Tests for This Layer
+
+- Command Handler: Repository Port mocked (in-memory fake or `jest.fn()`), assert findById -> domain method called -> save called.
+- Query Handler: Query Port mocked, assert it returns the Read Model directly. Repository Port must not be injected; if it is, the read path is wrong.
+- Cover one happy path and one invariant-violation per Command Handler (handler should bubble the domain exception).
+- Domain Service (if present): plain unit test with two Aggregates passed in; assert the cross-aggregate rule decision.
+
+### NestJS Checkpoint
+
+- Port is an `abstract class` so it survives compilation and works as a DI token. Interfaces would be erased.
+- Compare provider forms: `useClass` (most common here), `useFactory` (for env-driven choice), `useExisting` (alias another token).
+- Handlers are registered as providers; `@CommandHandler` / `@QueryHandler` decorators trigger CQRS module wiring.
 
 ### Verification
 
@@ -256,11 +391,62 @@ rg "from '.*infra" src/<domain>/application/
 - `toOrm(domain) -> ORM`: create an ORM entity and assign properties.
 - Mapper needs `@Injectable()`.
 
-### 3.3 Repository
+### 3.3 Repository (Write Side)
 
 - Extend `XxxRepositoryPort`.
 - Inject TypeORM repository with `@InjectRepository(...)` and inject Mapper.
 - Load related ORM entities explicitly through `relations` options.
+- Repositories return and accept **domain models**, never DTOs.
+
+### 3.4 Read Models (Query Side)
+
+The read path skips the domain layer entirely.
+
+- Implement the `XxxQueryPort` from Phase 2.4 under `infra/query-repositories/`.
+- Use `QueryBuilder` or `find({ select, where, relations })` to project ORM entities directly into the `XxxReadModel` DTO shape. Do not load full Aggregates.
+- No Mapper, no `reconstitute()`. Composition happens in SQL or in the `select` clause.
+- For composite reads (e.g., Order + items + customer summary), prefer one query with joins over multiple `findOne` calls.
+- Mark the implementation `@Injectable()` and bind it in the module: `{ provide: XxxQueryPort, useClass: XxxQueryRepository }`.
+
+Rationale: Queries vastly outnumber commands in real systems. Forcing them through domain reconstitution adds CPU work and hides the actual SQL shape. Separating read and write also lets the read side evolve (denormalized projections, materialized views) without touching the domain.
+
+### 3.5 Transactions
+
+A use case often spans multiple repositories (e.g., save the Order and append an OutboxEvent). All writes must commit or roll back together — but `application/` must not import TypeORM transaction primitives.
+
+Recommended pattern (CLS-based): `typeorm-transactional`.
+
+- Install: `npm install typeorm-transactional`.
+- Bootstrap once in `main.ts`: `initializeTransactionalContext()` before `NestFactory.create(...)`.
+- Wrap the DataSource at registration time with `addTransactionalDataSource(dataSource)` inside `TypeOrmModule.forRootAsync({ dataSourceFactory: ... })`.
+- Decorate Application Service or Command Handler methods with `@Transactional()`. Every repository call underneath joins the same transaction automatically through CLS.
+
+What this buys:
+
+- `application/` and `domain/` stay free of `EntityManager` and `QueryRunner`.
+- Transaction context propagates implicitly. A repository never has to accept a `manager` parameter.
+- Nested `@Transactional()` calls join the outer transaction by default (`Propagation.REQUIRED`).
+
+What to avoid:
+
+- Passing `EntityManager` or `QueryRunner` as a function argument through the application layer.
+- Calling `dataSource.transaction(...)` from a Command Handler — that puts infra knowledge in application code.
+
+### Tests for This Layer
+
+- Mapper: `toDomain(toOrm(domain))` round-trips losslessly for a representative Aggregate.
+- Repository: integration test against a real SQLite in-memory DB; save then findById returns an equal domain object.
+- Cover one related-entity case (e.g., Order with OrderItems) to verify `relations` loading.
+- Read Model: integration test asserting the Query Port returns the DTO shape and skips `reconstitute()`.
+- Transactions: a multi-repository use case rolls back fully when the second save throws (assert no partial write remains).
+- Do not mock TypeORM — the value of this layer is the real ORM behavior.
+
+### NestJS Checkpoint
+
+- `@InjectRepository(OrmEntity)` is how TypeORM's repository token is resolved; the module must have called `TypeOrmModule.forFeature([OrmEntity])`.
+- Transactions propagate through CLS once `initializeTransactionalContext()` is called and the DataSource is wrapped with `addTransactionalDataSource()`. Methods marked `@Transactional()` join or open the ambient transaction.
+- Read Model providers and Write Repository providers are bound on different Ports in the module — keep them separate so the read side can evolve.
+- Avoid request-scoped providers in this layer — each request creates a new instance and breaks pooling assumptions.
 
 ---
 
@@ -276,14 +462,30 @@ rg "from '.*infra" src/<domain>/application/
 
 ### 4.2 Response DTOs
 
-- Place under `presenters/http/responses/`.
-- Use `static fromDomain(model)`.
-- Instantiate with `new` to make the response shape explicit.
+Different rules for the two paths:
+
+- **Command response**: typically `void`, an id, or a small acknowledgement. No Response DTO needed for most commands; return `204 No Content` or `{ id }`.
+- **Query response**: return the Read Model from the Query Handler directly, or wrap it minimally if the HTTP shape differs from the Read Model. **Do not** define a Response DTO that re-maps a Read Model — that recreates the read mapping cost CQRS removed.
+- Keep `static fromDomain(model)` only for the rare case a Command returns a piece of the Aggregate (e.g., showing the just-created order id with a few fields). Prefer reissuing a query in those cases.
+
+Place response classes under `presenters/http/responses/` only when actually needed.
 
 ### 4.3 Controller
 
 - Use `@Controller('<resource>')` and endpoint decorators.
-- Inject Service and return Response DTOs.
+- Inject the thin Service facade and return either the Read Model (queries) or status/acknowledgement (commands).
+
+### Tests for This Layer
+
+- DTO validation: build a `TestingModule`, send invalid payloads, assert 400 with the expected validation error shape.
+- Controller e2e: boot `INestApplication` with a mocked Service, hit endpoints via supertest, assert status codes and response DTO shape.
+- Cover one happy path and one validation-rejection path per endpoint.
+
+### NestJS Checkpoint
+
+- Know the role split: Pipe (transform + validate input), Guard (authorization, returns boolean), Interceptor (cross-cutting before/after), Exception Filter (catch + format error).
+- Where each runs: Guard -> Pipe -> Handler -> Interceptor (post) -> Filter (on throw).
+- Global `ValidationPipe` with `whitelist` strips unknown fields; `forbidNonWhitelisted` rejects them with 400 instead.
 
 ---
 
@@ -307,6 +509,18 @@ rg "from '.*infra" src/<domain>/application/
 
 - Register global `ValidationPipe` with `whitelist`, `forbidNonWhitelisted`, and `transform`.
 - Register `DomainExceptionFilter` in Phase 7.
+
+### Tests for This Layer
+
+- DI smoke test: `Test.createTestingModule({ imports: [AppModule] }).compile()` succeeds, proving the module graph wires up.
+- Bind override test: replace the Port with a fake using `.overrideProvider(XxxRepositoryPort).useClass(InMemoryXxxRepository)` and verify the Service resolves the fake.
+
+### NestJS Checkpoint
+
+- Module visibility: a provider is only injectable inside the module that declares it unless that module `exports` it.
+- `imports` brings other modules' exported providers; `providers` declares this module's; `controllers` registers HTTP entry points.
+- Lifecycle: `onModuleInit` runs after all providers are constructed; `onApplicationShutdown` for graceful shutdown of pools and queues.
+- **Avoid `forwardRef()`.** If two BC modules import each other, the design is wrong, not the syntax. Resolve it by (a) extracting the shared abstraction into a `SharedModule` that both depend on, or (b) inverting one direction through a Domain Event so the dependency becomes asynchronous and one-way.
 
 ### Verification
 
@@ -347,20 +561,56 @@ Tip: in zsh, wrap URLs containing `?` in quotes.
 - `@Catch(DomainException)` maps domain exceptions to HTTP statuses.
 - Register globally in `main.ts` with `app.useGlobalFilters(...)`.
 
+### Tests for This Layer
+
+- Filter mapping: for each concrete domain exception, assert it maps to the expected HTTP status and response body shape.
+- Boundary test: a `BadRequestException` from `ValidationPipe` should not be caught by `DomainException` filter.
+
+### NestJS Checkpoint
+
+- Global filter registration order matters: filters registered later wrap earlier ones; `useGlobalFilters` adds to a stack.
+- A non-`DomainException` thrown in a handler bubbles past `@Catch(DomainException)` and lands on Nest's built-in filter — verify that path with a deliberate `throw new Error('x')` test.
+- Prefer one base `DomainException` per BC over many filter classes; the mapping table belongs in the filter, not the exception.
+
 ---
 
-## Phase 8: Unit Test Strategy
+## Advanced Topics
 
-| Layer | Test Type | Mock |
-|---|---|---|
-| Domain (VO, Model) | Pure unit test | None |
-| Application Handler | Unit test | Port only |
-| Infra (Repository, Mapper) | Integration test | Real SQLite |
-| Presenters (Controller) | e2e test | Service only |
+These topics belong to the Advanced tier. Basic and Intermediate playthroughs may skip the section entirely.
 
-Core principle: if a Domain test needs mocks, the domain design is probably wrong.
+### Transactional Outbox
 
-Synchronize Jest `moduleNameMapper` with path aliases.
+**Problem (dual write):** A Command Handler saves an Aggregate and then publishes a Domain Event. If the in-process event bus fires before the DB commit, subscribers act on data that may roll back. If the DB commits but event delivery to a broker fails, the system is left in an inconsistent state with no retry path. Both failures are silent.
+
+**Pattern:** Treat the event as data and write it in the **same transaction** as the Aggregate.
+
+1. Add an `outbox_events` table: `id`, `aggregate_id`, `event_type`, `payload (json)`, `occurred_at`, `published_at (nullable)`, `idempotency_key`.
+2. In the Command Handler, save the Aggregate **and** insert the outbox row inside one `@Transactional()` boundary. The commit is atomic: both rows land, or neither.
+3. A separate **relay** (a polling worker or DB change-feed consumer) reads unpublished rows, delivers them to the bus or broker, and stamps `published_at`. Subscribers must be idempotent on `idempotency_key` because the relay may deliver duplicates.
+
+**Implementation for learning purposes:** a simple `@Interval(1000)` worker that selects 100 unpublished rows, publishes each to `EventBus`, and sets `published_at`. This is enough to demonstrate the atomicity guarantee and duplicate-delivery handling.
+
+**Verification:** in a test, simulate a publish failure after the DB commit and confirm the relay retries on the next tick; simulate the same event twice and confirm subscribers do not double-apply.
+
+---
+
+## Phase 8: Test Strategy Index
+
+Tests are written *during* each phase, not deferred to the end. This phase is a one-page cross-reference.
+
+| Layer | Phase | Test Type | Mock |
+|---|---|---|---|
+| Domain (VO, Model) | Phase 1 | Pure unit test | None |
+| Application Handler | Phase 2 | Unit test | Port only |
+| Infra (Repository, Mapper) | Phase 3 | Integration test | Real SQLite |
+| Presenters (Controller) | Phase 4 | e2e via `INestApplication` | Service only |
+| Module Wiring | Phase 5 | DI smoke test (`.compile()`) | Optional override |
+| Exception Filter | Phase 7 | Filter mapping test | None |
+
+Core principles:
+- If a Domain test needs mocks, the domain design is probably wrong.
+- Synchronize Jest `moduleNameMapper` with `tsconfig.json` path aliases.
+- Each phase's "Tests for This Layer" subsection is the source of truth; this table is just an index.
 
 ---
 
@@ -375,12 +625,12 @@ Synchronize Jest `moduleNameMapper` with path aliases.
 | Module is the only wiring point | Swap implementation by changing one module |
 | Separate ID VO for each Entity, such as `OrderId` versus `OrderItemId` | Type safety and fewer mistakes |
 | Separate `create()` and `reconstitute()` | Clear distinction between new object creation and DB restoration |
+| Query path bypasses domain layer; Read Models live in `infra/query-repositories/` and `application/ports/queries/` | True CQRS, no reconstitution cost for reads |
+| Transaction context propagates via CLS or decorator, never as a function parameter from application to infra | Keeps `application/` and `domain/` free of `EntityManager` / `QueryRunner` |
+| Module dependency between BCs must be unidirectional or event-driven; do not use `forwardRef()` to paper over cycles | Cycle = design problem, not syntax problem |
 
 ---
 
-## Reference Examples
+## Playthrough Location
 
-- **order-management/**: completed single-BC example with Order/OrderItem Root + child Entity pattern. Compare after basic to intermediate practice.
-- **reservation-management/**: 2 BCs with Cross-BC Port and Domain Service. Compare after intermediate practice. It is a partial in-progress reference.
-
-When working on a new playthrough, write your code under `workspace/<playthrough>/code/`. Do not overwrite the reference code.
+Each playthrough lives under `workspace/<playthrough>/code/`. The `workspace/` directory is Git-ignored.

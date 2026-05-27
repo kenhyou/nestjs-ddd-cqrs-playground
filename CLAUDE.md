@@ -115,6 +115,7 @@ Dependencies flow from top to bottom. Infrastructure implements Ports defined in
 - Transaction context propagates via CLS or decorator (e.g., `typeorm-transactional`'s `@Transactional()`), never as a `manager` / `QueryRunner` parameter passed from `application/` to `infra/`.
 - The Query path bypasses the domain layer: Query Handlers depend on `XxxQueryPort` and return Read Model DTOs read directly from the ORM. Never call `reconstitute()` from a Query Handler.
 - Between BC modules, dependencies are unidirectional or event-driven. `forwardRef()` is a smell, not a tool.
+- **Aggregate boundary and FK**: ORM relationships (`@OneToMany`, `@ManyToOne`) are allowed only **within the same Aggregate** (e.g., `Order` ↔ `OrderItem`). **Across Aggregates**, reference by ID only — store the foreign Aggregate's ID as a plain `@Column` with `@Index()` if needed, never with `@ManyToOne` or actual FK constraint. This keeps Aggregates independently loadable, prevents accidental cascade deletes between Aggregates, and matches the DDD principle that each Aggregate is its own consistency boundary.
 
 ## Code Conventions
 
@@ -124,13 +125,11 @@ Aggregate Roots and Entities under `domain/models/` follow this order.
 
 1. **Field declaration** through `private constructor` parameter properties.
 2. **Static factories** such as `static create()` and `static reconstitute()`.
-3. **Getters** such as `getId()` and `getStatus()`.
-4. **Business behavior** such as `addItem()`, `confirm()`, `cancel()`, and state-transition methods.
-5. **Derived calculations / queries** such as `getTotalPrice()` and `isActive()`.
+3. **Business behavior** such as `addItem()`, `confirm()`, `cancel()`, and state-transition methods.
+4. **Derived calculations / queries** such as `getTotalPrice()` and `isActive()`.
+5. **Getters** such as `getId()` and `getStatus()`.
 
 Group methods by category and leave one blank line between categories.
-
-Classic DDD often emphasizes behavior before getters, but this project keeps the order above for consistency.
 
 ### VO Method Order
 

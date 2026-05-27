@@ -5,45 +5,45 @@
 - [x] Tactical Design (`docs/DESIGN.md`)
 
 ## Phase 0: NestJS Project Setup
-- [x] `nest new` 실행, 디렉토리 구조 생성
-- [x] TypeORM, SQLite 의존성 설치
+- [x] Run `nest new`, create directory structure
+- [x] Install TypeORM and SQLite dependencies
 
 ## Phase 1: Domain Layer
-- [x] `OrderId`, `OrderItemId` VO 작성 및 테스트
-- [x] `Money` VO 작성 및 테스트
-- [x] `OrderStatus` enum 작성
-- [x] `OrderItem` Entity 작성
-- [x] `Order` Aggregate Root 작성 (`create`, `reconstitute`, 상태 전이 메서드)
-- [x] Domain 단위 테스트 (NestJS/TypeORM import 없이)
+- [x] Write `OrderId`, `OrderItemId` VOs and tests
+- [x] Write `Money` VO and tests
+- [x] Write `OrderStatus` enum
+- [x] Write `OrderItem` Entity
+- [x] Write `Order` Aggregate Root (`create`, `reconstitute`, state-transition methods)
+- [x] Domain unit tests (no NestJS/TypeORM imports)
 
 ## Phase 2: Application Layer
-- [x] Command / Query 클래스 작성
-- [x] Command Handler 작성 (CreateOrder, AddItem, ConfirmOrder, CancelOrder, ShipOrder)
-- [x] Query Handler 작성 (GetOrder)
-- [x] Repository Port (abstract class) 작성
-- [x] Query Port (abstract class) 작성
+- [x] Write Command / Query classes
+- [x] Write Command Handlers (CreateOrder, AddItem, ConfirmOrder, CancelOrder, ShipOrder)
+- [x] Write Query Handler (GetOrder)
+- [x] Write Repository Port (abstract class)
+- [x] Write Query Port (abstract class)
 
 ## Phase 3: Infrastructure Layer
-- [x] TypeORM Entity 작성
-- [x] Mapper 작성 (Domain ↔ ORM)
-- [x] TypeORM Repository 구현체 작성 (OrderRepository, OrderQuery)
+- [x] Write TypeORM Entities
+- [x] Write Mappers (Domain ↔ ORM)
+- [x] Write TypeORM Repository implementations (OrderRepository, OrderQuery)
 
 ## Phase 4: Presenter Layer
-- [x] DTO 작성
-- [x] Controller 작성
+- [x] Write DTOs
+- [x] Write Controller
 
-## Phase 5: Module 조립
-- [x] `OrderModule` 작성 (Port ↔ 구현체 바인딩)
-- [x] `AppModule` 연결
+## Phase 5: Module Assembly
+- [x] Write `OrderModule` (Port ↔ implementation binding)
+- [x] Wire up `AppModule`
 
-## Phase 6: E2E 테스트
-- [x] Happy-path e2e 테스트
-- [x] 불변식 위반 e2e 테스트 (SHIPPED 상태에서 cancel 시도)
+## Phase 6: E2E Tests
+- [x] Happy-path e2e test
+- [x] Invariant-violation e2e test (attempt to cancel from SHIPPED state)
 
-## Basic Pass Criteria 체크
-- [x] VO/Aggregate Root 테스트에 NestJS/TypeORM import 없음
-- [x] Happy-path e2e 1개 이상
-- [x] 불변식 위반 e2e 1개 이상
-- [x] Query Handler에서 `reconstitute()` 미호출
-- [x] Aggregate 경계와 불변식을 한 문장으로 설명 가능
-  - **답변**: Order Aggregate는 Order와 OrderItem을 함께 보호하며, Order에는 하나 이상의 OrderItem이 있어야 한다.
+## Basic Pass Criteria Checklist
+- [x] No NestJS/TypeORM imports in VO/Aggregate Root tests
+- [x] At least one happy-path e2e test
+- [x] At least one invariant-violation e2e test
+- [x] No `reconstitute()` call inside Query Handlers
+- [x] Able to describe the Aggregate boundary and invariants in one sentence
+  - **Answer**: The Order Aggregate protects Order and OrderItem together, and an Order must have at least one OrderItem.

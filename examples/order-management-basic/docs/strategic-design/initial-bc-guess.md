@@ -1,9 +1,9 @@
-# 초기 BC 후보 (사전 추측)
+# Initial BC Candidates (Pre-discussion Guess)
 
-> 작성 시각: 2026-05-25
-> Phase 2 토론 시작 전 작성
+> Written: 2026-05-25
+> Drafted before the Phase 2 discussion began
 
 ---
 
-1. **Order** — 주문의 생성과 상태를 관리한다.
-2. **OrderItem** — 주문에 들어가 있는 아이템을 관리한다.
+1. **Order** — Manages the creation and state of orders.
+2. **OrderItem** — Manages the items contained in an order.

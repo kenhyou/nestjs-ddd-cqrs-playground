@@ -1,29 +1,29 @@
-# BC 경계 토론 — Order vs OrderItem 분리 여부
+# BC Boundary Debate — Splitting Order vs OrderItem
 
-> Phase 3 토론 기록
+> Phase 3 discussion record
 
 ---
 
-## 쟁점
+## The Question
 
-OrderItem을 Order와 같은 BC에 둘 것인가, 별도 BC로 분리할 것인가?
+Should OrderItem live in the same BC as Order, or be split into a separate BC?
 
-## 역할별 입장
+## Position by Role
 
-| 역할 | 입장 | 핵심 근거 |
-|------|------|-----------|
-| Domain Expert | 단일 BC | 동일 언어 공동체, OrderItem은 Order 없이 의미 없음 |
-| Solution Architect | 단일 BC | 불변식(아이템 1개 이상, CONFIRMED 후 수정 불가)은 같은 트랜잭션 경계에서만 강제 가능 |
-| Tech Lead | 단일 BC | 분리 시 forwardRef 순환 의존 위험, 운영 오버헤드 증가 |
-| Product Owner | 단일 BC | 같은 팀, 같은 릴리스 주기 — 분리하면 릴리스 결합만 생김 |
+| Role | Position | Key Reason |
+|------|----------|------------|
+| Domain Expert | Single BC | Same language community; OrderItem has no meaning without Order |
+| Solution Architect | Single BC | Invariants (at least one item, no modification after CONFIRMED) can only be enforced inside the same transactional boundary |
+| Tech Lead | Single BC | Splitting risks `forwardRef` circular dependencies and adds operational overhead |
+| Product Owner | Single BC | Same team, same release cycle — splitting only creates release coupling |
 
-## 사용자 최종 결정
+## Final User Decision
 
-**단일 BC (Order Management)**
+**Single BC (Order Management)**
 
-> "OrderItem은 Order라고 하는 경계 내에서 관리되는 것이 맞다고 생각합니다."
+> "I think OrderItem is best managed within the boundary called Order."
 
-## 부가 학습 포인트
+## Additional Learning Points
 
-- `forwardRef()`는 NestJS 문법이지만, 그 정신은 DDD의 BC 단방향 의존 원칙을 코드 레벨에서 구체화한 것
-- `Item`이라는 어휘는 미래 Inventory/Catalog BC와 충돌 가능 — 언어 경계 인식 필요
+- `forwardRef()` is NestJS syntax, but in spirit it concretizes the DDD principle of unidirectional BC dependencies at the code level
+- The vocabulary `Item` could collide with a future Inventory/Catalog BC — vocabulary-boundary awareness is needed

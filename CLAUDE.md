@@ -108,6 +108,7 @@ Dependencies flow from top to bottom. Infrastructure implements Ports defined in
 
 ## Core Rules
 
+- **File/folder naming and class skeletons** are documented in `docs/CONVENTIONS.md`. Consult and update it instead of re-deriving conventions from prior playthroughs' code.
 - No TypeORM or NestJS imports inside `domain/`, except `@Injectable` where this project explicitly allows it.
 - No `infra/` imports inside `application/`.
 - Ports are `abstract class` values so they can be used as runtime DI tokens.

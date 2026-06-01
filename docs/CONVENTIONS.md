@@ -9,7 +9,9 @@ Cross-playthrough conventions for the four-layer DDD + CQRS structure. This exis
 
 > **Known deviations — do NOT copy from `workspace/reservation-management`** (a gitignored practice run):
 > 1. its query handlers return **domain models** via the repository port — violates the read-bypass rule (use Query Port → Read Model);
-> 2. it names handlers `*.command.handler.ts` and uses `infra/persistence/orm/...` — the committed reference uses `*.handler.ts` and a flat `infra/` (below).
+> 2. it uses `infra/persistence/orm/...` — we use a flat `infra/` (below).
+>
+> **Project deviations from the reference that ARE our standard** (intentional): two-method ID VO (`generate()` + `create(value)`); command handler files named `*.command.handler.ts` (for symmetry with `*.command.ts` and `*.query.handler.ts`); keep the service facade.
 
 ---
 
@@ -35,7 +37,7 @@ src/<bc>/
 │   └── exceptions/               # (.exception.ts)
 └── infra/                        # FLAT — no persistence/orm/ nesting
     ├── entities/                 # <aggregate>.entity.ts (TypeORM)
-    ├── mapper/                   # <aggregate>.mapper.ts
+    ├── mappers/                  # <aggregate>.mapper.ts
     ├── repositories/             # <aggregate>.repository.ts (write impl)
     ├── queries/                  # <aggregate>.query.ts (read/Query Port impl)
     └── adapters/                 # cross-BC ACL adapters (only where this BC consumes another)
@@ -61,12 +63,12 @@ Multi-BC playthroughs use **per-BC path aliases**: `@order/*`, `@payment/*`, `@s
 | Cross-BC Port (ACL) | `<capability>.port.ts` | `payment-command.port.ts`, `payment-status-query.port.ts` |
 | Read Model DTO | `<name>.read-model.ts` in `queries/dtos/` | `order.read-model.ts` |
 | Command | `<verb>-<aggregate>.command.ts` | `create-order.command.ts` |
-| Command Handler | `<verb>-<aggregate>.handler.ts` (class `…CommandHandler`) | `create-order.handler.ts` |
+| Command Handler | `<verb>-<aggregate>.command.handler.ts` (class `…CommandHandler`) | `create-order.command.handler.ts` |
 | Query | `<verb>-<name>.query.ts` | `get-order.query.ts` |
 | Query Handler | `<verb>-<name>.query.handler.ts` | `get-order.query.handler.ts` |
 | Service Facade | `<aggregate>.service.ts` | `order.service.ts` |
 | ORM Entity | `<aggregate>.entity.ts` in `infra/entities/` | `order.entity.ts` |
-| Mapper | `<aggregate>.mapper.ts` in `infra/mapper/` | `order.mapper.ts` |
+| Mapper | `<aggregate>.mapper.ts` in `infra/mappers/` | `order.mapper.ts` |
 | Repository impl | `<aggregate>.repository.ts` in `infra/repositories/` | `order.repository.ts` |
 | Query impl | `<aggregate>.query.ts` in `infra/queries/` (class `…Query`) | `order.query.ts` |
 | Cross-BC Adapter | `<capability>.adapter.ts` in `infra/adapters/` | `payment-command.adapter.ts` |

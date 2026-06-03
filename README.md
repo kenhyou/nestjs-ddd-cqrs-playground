@@ -4,6 +4,8 @@ A personal learning platform for practicing **Domain-Driven Design (DDD)** and *
 
 This is a learning repository, not a starter template. Practice code, design notes, and PRDs live under `workspace/` and are Git-ignored.
 
+> 🌱 **New to DDD?** Start with **[Getting Started with Domain-Driven Design](docs/getting-started-with-ddd.md)** — a beginner's introduction and a staged learning path (Basic → Intermediate → Advanced) that plugs directly into this platform.
+
 ---
 
 ## 🎯 Purpose
@@ -171,6 +173,8 @@ Phase 0 in [PLAN.md](PLAN.md) lists the exact dependencies and the `--save-exact
 
 ## 📚 Where Things Are
 
+- **DDD primer**: [docs/getting-started-with-ddd.md](docs/getting-started-with-ddd.md) — beginner's introduction to DDD + a staged learning path that maps onto the tiers and examples here.
+- **Worked examples**: [examples/order-management-basic/](examples/order-management-basic/) (Basic) and [examples/order-management-intermediate/](examples/order-management-intermediate/) (Intermediate) — committed reference implementations.
 - **Curriculum and rules**: [PLAN.md](PLAN.md) — 8 phases, tier pass criteria, Advanced Topics (Transactional Outbox), Shared Architecture Rules.
 - **Workflow guide**: [PROGRESS.md](PROGRESS.md) — how to start a new sub-project.
 - **Agent instructions**: [CLAUDE.md](CLAUDE.md) — how AI agents should collaborate inside this repo, including language conventions.

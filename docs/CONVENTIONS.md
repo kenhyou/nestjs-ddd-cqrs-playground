@@ -11,7 +11,7 @@ Cross-playthrough conventions for the four-layer DDD + CQRS structure. This exis
 > 1. its query handlers return **domain models** via the repository port — violates the read-bypass rule (use Query Port → Read Model);
 > 2. it uses `infra/persistence/orm/...` — we use a flat `infra/` (below).
 >
-> **Project deviations from the reference that ARE our standard** (intentional): two-method ID VO (`generate()` + `create(value)`); command handler files named `*.command.handler.ts` (for symmetry with `*.command.ts` and `*.query.handler.ts`); keep the service facade.
+> **Project standards worth calling out** (the reference follows all of these): two-method ID VO (`generate()` + `create(value)`); command handler files named `*.command.handler.ts` (for symmetry with `*.command.ts` and `*.query.handler.ts`); keep the service facade between controller and buses.
 
 ---
 
@@ -80,7 +80,7 @@ Multi-BC playthroughs use **per-BC path aliases**: `@order/*`, `@payment/*`, `@s
 ## Naming inside classes
 
 - **Getters are entity-prefixed** for id/status/items/total: `getOrderId()`, `getOrderStatus()`, `getOrderItems()`, `getTotalPrice()`, `getOrderItemId()`, `getPaymentId()`, `getPaymentStatus()`. Already-descriptive attributes keep their name: `getCustomerId()`, `getUnitPrice()`, `getQuantity()`, `getAmount()`, `getMethod()`. Fields mirror the getters (`orderId`, `orderStatus`, `orderItems`, `totalPrice`).
-- **ID VO factories use two methods** (project standard, an intentional deviation from the reference's overloaded `create()`): `OrderId.generate()` for a new id, `OrderId.create(value)` to wrap/validate an existing one. Clearer intent at call sites.
+- **ID VO factories use two methods**: `OrderId.generate()` for a new id, `OrderId.create(value)` to wrap/validate an existing one. Clearer intent at call sites than a single overloaded `create(id?)`.
 - **Identity rule**: an aggregate's **own** id is a VO (`paymentId: PaymentId`); a reference to a **foreign** aggregate is a plain `string` (`orderId: string`) — no FK, no foreign VO import.
 
 ---
@@ -116,7 +116,7 @@ export class CreateOrderCommand {
 Injects a **Query Port** (not the repository), returns a **Read Model DTO** (not a domain model). Never calls `reconstitute()` or a Mapper.
 
 ### Service Facade (kept — per PLAN.md 2.5 and DESIGN.md)
-`@Injectable`, injects `CommandBus` + `QueryBus`, one thin method per use case. Controllers call the facade, not the buses directly. (The basic reference injects buses straight into the controller; we keep the facade.)
+`@Injectable`, injects `CommandBus` + `QueryBus`, one thin method per use case. Controllers call the facade, not the buses directly.
 
 ### Infra
 - **Entity**: `@Entity('<table>')`, snake_case columns via `name:`, status as `{ type: 'simple-enum', enum: XStatus }`, money as `decimal` + a separate currency column, `@CreateDateColumn`. `@OneToMany`/`@ManyToOne` only **within** an aggregate (`cascade`, `eager` ok there); across aggregates store the foreign id as a plain indexed column.
@@ -138,7 +138,7 @@ Cross-BC Ports speak **primitives** (`{ orderId, amount, currency, method }`), n
 - **Don't unit-test plain `enum`s** — `Status.X === 'X'` is a tautology.
 - **Assert on error *type*, not message.** Until Phase 7's typed exceptions, use bare `.toThrow()` — never couple to message copy.
 - **`npm test` green ≠ types OK.** `ts-jest` (`isolatedModules`) skips full type-checking. Always run `npx tsc --noEmit` as a separate gate.
-- Request DTOs use `class-validator` decorators (PLAN.md 4.1) even though the basic reference omitted them.
+- Request DTOs use `class-validator` decorators (PLAN.md 4.1), and the app registers a global `ValidationPipe` (`whitelist`/`forbidNonWhitelisted`/`transform`) in `main.ts`.
 - Keep test helpers local (`buildItem()` / `buildConfirmedOrder()`), not inline IIFEs.
 
 ---

@@ -207,11 +207,15 @@ npm install --save-exact class-validator class-transformer
 
 ### 0.3 Folder Structure
 
+`docs/CONVENTIONS.md` is authoritative for folder/file naming. The current layout uses a **flat `infra/`** (no `persistence/orm/` nesting) and `presenters/http/dtos/` (not `requests/`):
+
 ```bash
-mkdir -p src/<domain>/presenters/http/{controllers,requests,responses,filters}
-mkdir -p src/<domain>/application/{services,commands,queries,ports}
-mkdir -p src/<domain>/domain/{models,factories,vo,exceptions}
-mkdir -p src/<domain>/infra/persistence/orm/{entities,repositories,mappers}
+mkdir -p src/<bc>/presenters/http/{controllers,dtos,filters}
+mkdir -p src/<bc>/application/{services,ports}
+mkdir -p src/<bc>/application/commands/handlers
+mkdir -p src/<bc>/application/queries/{dtos,handlers}
+mkdir -p src/<bc>/domain/{models,vo,enums,factories,services,exceptions}
+mkdir -p src/<bc>/infra/{entities,mappers,repositories,queries,adapters}
 ```
 
 ### 0.4 Path Aliases
@@ -459,7 +463,7 @@ What to avoid:
 
 ### 4.1 Request DTOs
 
-- Place under `presenters/http/requests/`.
+- Place under `presenters/http/dtos/` (named `<verb>-<aggregate>.request.ts`).
 - Use `@IsString`, `@IsNumber`, `@ValidateNested`, `@Type`, and similar validators.
 
 ### 4.2 Response DTOs

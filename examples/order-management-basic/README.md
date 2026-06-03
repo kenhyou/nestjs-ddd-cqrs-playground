@@ -23,8 +23,9 @@ A reference implementation of an order management system applying DDD Strategic/
 - **Framework**: NestJS 11
 - **CQRS**: `@nestjs/cqrs`
 - **ORM**: TypeORM 0.3 + better-sqlite3
+- **Validation**: `class-validator` / `class-transformer` (global `ValidationPipe`)
 - **Language**: TypeScript 5.7 (strict null checks)
-- **Test**: Jest (unit + e2e), Supertest
+- **Test**: Jest (unit + integration + e2e), Supertest
 
 ---
 
@@ -45,14 +46,16 @@ infra               # TypeORM Entity, Repository implementations, Mapper
 ### CQRS Path Separation
 
 ```
-Command path:  Controller → CommandBus → CommandHandler → OrderRepositoryPort → DB
-                                                ↓
-                                          Order Aggregate (domain)
+Command path:  Controller → OrderService → CommandBus → CommandHandler → OrderRepositoryPort → DB
+                                                              ↓
+                                                        Order Aggregate (domain)
 
-Query path:    Controller → QueryBus → QueryHandler → OrderQueryPort → DB
-                                              ↓
-                                        OrderReadModel (DTO, bypasses domain)
+Query path:    Controller → OrderService → QueryBus → QueryHandler → OrderQueryPort → DB
+                                                            ↓
+                                                      OrderReadModel (DTO, bypasses domain)
 ```
+
+The controller calls the thin `OrderService` facade rather than the buses directly.
 
 **Rule**: Query Handlers never call `Order.reconstitute()`. Read Model DTOs are built directly from the ORM.
 
@@ -75,17 +78,19 @@ src/order/
 │
 ├── application/
 │   ├── commands/                    # CreateOrder, AddOrderItem, Confirm, Cancel, Ship
-│   │   └── handlers/
+│   │   └── handlers/                # *.command.handler.ts
 │   ├── queries/
 │   │   ├── handlers/
 │   │   └── dtos/                    # OrderReadModel
-│   └── ports/
-│       ├── order.repository.port.ts # Write Port (abstract class)
-│       └── order.query.port.ts      # Read Port (abstract class)
+│   ├── ports/
+│   │   ├── order.repository.port.ts # Write Port (abstract class)
+│   │   └── order.query.port.ts      # Read Port (abstract class)
+│   └── services/
+│       └── order.service.ts         # thin CommandBus/QueryBus facade
 │
 ├── infra/
 │   ├── entities/                    # TypeORM Entity
-│   ├── mapper/                      # Domain ↔ ORM Mapper
+│   ├── mappers/                     # Domain ↔ ORM Mapper
 │   ├── repositories/                # OrderRepositoryPort implementation
 │   └── queries/                     # OrderQueryPort implementation
 │
@@ -177,10 +182,12 @@ The default port is `3000`. A SQLite database file (`order.db`) is created at th
 ### Test
 
 ```bash
-npm test               # unit tests (45)
+npm test               # unit + integration tests (76)
 npm run test:e2e       # e2e tests (in-memory SQLite, 2)
 npm run test:cov       # coverage
 ```
+
+Coverage spans every layer: domain unit tests, port-mocked command/query handler tests, real-SQLite mapper/repository/query integration tests, and a controller e2e (`INestApplication` + Supertest).
 
 ---
 
@@ -215,7 +222,7 @@ Strict CQRS insists Commands return `void`, but for client ergonomics `CreateOrd
 
 ### 6. HTTP DTO vs Command/Query DTO
 
-- HTTP Request DTO: no constructor, only public properties — works with JSON deserialization.
+- HTTP Request DTO: no constructor, only public properties carrying `class-validator` decorators (incl. `@ValidateNested` + `@Type` for the items array) — works with JSON deserialization and the global `ValidationPipe`.
 - Command/Query DTO: constructor with positional arguments — preserves TypeScript type safety in code-driven creation paths.
 
 ---

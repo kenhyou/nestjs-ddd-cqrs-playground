@@ -1,9 +1,41 @@
+import { Type } from 'class-transformer';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+
+export class CreateOrderItemRequest {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+
+  @IsNumber()
+  @Min(0)
+  unitPrice: number;
+
+  @IsString()
+  @IsNotEmpty()
+  currency: string;
+}
+
 export class CreateOrderRequest {
+  @IsString()
+  @IsNotEmpty()
   customerId: string;
-  items: {
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    currency: string;
-  }[];
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemRequest)
+  items: CreateOrderItemRequest[];
 }

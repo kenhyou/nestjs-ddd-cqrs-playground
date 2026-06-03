@@ -18,8 +18,8 @@ describe('OrderId', () => {
       expect(id.getValue()).toBe('550e8400-e29b-41d4-a716-446655440000');
     });
 
-    it('should generate a new UUID when id is not provided', () => {
-      const id = OrderId.create();
+    it('should generate a new UUID via generate()', () => {
+      const id = OrderId.generate();
       expect(id).toBeInstanceOf(OrderId);
       expect(id.getValue()).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,

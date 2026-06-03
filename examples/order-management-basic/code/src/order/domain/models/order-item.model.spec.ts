@@ -1,4 +1,4 @@
-import { OrderItemId } from 'src/order/domain/vo/order-item-id.vo';
+import { OrderItemId } from '@order/domain/vo/order-item-id.vo';
 import { OrderItem } from './order-item.model';
 import { Money } from '@order/domain/vo/money.vo';
 

@@ -16,7 +16,7 @@ export class OrderEntity {
   @Column({ name: 'customer_id' })
   customerId: string;
 
-  // 수정 — simple-enum (TypeORM이 varchar로 저장)
+  // simple-enum (TypeORM stores it as varchar)
   @Column({ name: 'status', type: 'simple-enum', enum: OrderStatus })
   status: OrderStatus;
 

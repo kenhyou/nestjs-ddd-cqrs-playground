@@ -4,12 +4,16 @@ const UUID_REGEX =
 export class OrderId {
   private constructor(private readonly value: string) {}
 
-  static create(id?: string): OrderId {
-    if (id !== undefined && !UUID_REGEX.test(id)) {
+  static generate(): OrderId {
+    return new OrderId(crypto.randomUUID());
+  }
+
+  static create(value: string): OrderId {
+    if (!UUID_REGEX.test(value)) {
       throw new Error('id should be an UUID');
     }
 
-    return new OrderId(id ?? crypto.randomUUID());
+    return new OrderId(value);
   }
 
   getValue(): string {

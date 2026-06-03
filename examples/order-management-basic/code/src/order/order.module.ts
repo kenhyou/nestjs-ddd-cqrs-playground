@@ -6,16 +6,17 @@ import { OrderEntity } from '@order/infra/entities/order.entity';
 import { OrderController } from '@order/presenters/http/controllers/order.controller';
 import { OrderRepositoryPort } from '@order/application/ports/order.repository.port';
 import { OrderRepository } from '@order/infra/repositories/order.repository';
-import { OrderMapper } from '@order/infra/mapper/order.mapper';
-import { CreateOrderCommandHandler } from '@order/application/commands/handlers/create-order.handler';
-import { ConfirmOrderCommandHandler } from '@order/application/commands/handlers/confirm-order.handler';
-import { CancelOrderCommandHandler } from '@order/application/commands/handlers/cancel-order.handler';
+import { OrderMapper } from '@order/infra/mappers/order.mapper';
+import { CreateOrderCommandHandler } from '@order/application/commands/handlers/create-order.command.handler';
+import { ConfirmOrderCommandHandler } from '@order/application/commands/handlers/confirm-order.command.handler';
+import { CancelOrderCommandHandler } from '@order/application/commands/handlers/cancel-order.command.handler';
 import { GetOrderQueryHandler } from '@order/application/queries/handlers/get-order.query.handler';
-import { OrderItemMapper } from '@order/infra/mapper/order-item.mapper';
-import { ShipOrderCommandHandler } from '@order/application/commands/handlers/ship-order.handler';
+import { OrderItemMapper } from '@order/infra/mappers/order-item.mapper';
+import { ShipOrderCommandHandler } from '@order/application/commands/handlers/ship-order.command.handler';
 import { OrderQuery } from '@order/infra/queries/order.query';
 import { OrderQueryPort } from '@order/application/ports/order.query.port';
-import { AddOrderItemCommandHandler } from '@order/application/commands/handlers/add-order-item.handler';
+import { AddOrderItemCommandHandler } from '@order/application/commands/handlers/add-order-item.command.handler';
+import { OrderService } from '@order/application/services/order.service';
 
 @Module({
   imports: [
@@ -24,6 +25,9 @@ import { AddOrderItemCommandHandler } from '@order/application/commands/handlers
   ],
   controllers: [OrderController],
   providers: [
+    // Facade
+    OrderService,
+
     // Mapper
     OrderMapper,
     OrderItemMapper,

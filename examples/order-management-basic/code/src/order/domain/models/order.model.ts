@@ -24,7 +24,7 @@ export class Order {
       Money.create(0, currency),
     );
     return new Order(
-      OrderId.create(),
+      OrderId.generate(),
       customerId,
       OrderStatus.PENDING,
       items,

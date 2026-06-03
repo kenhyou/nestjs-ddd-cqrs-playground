@@ -2,7 +2,7 @@ import { Order } from '@order/domain/models/order.model';
 import { OrderEntity } from '@order/infra/entities/order.entity';
 import { OrderId } from '@order/domain/vo/order-id.vo';
 import { Money } from '@order/domain/vo/money.vo';
-import { OrderItemMapper } from '@order/infra/mapper/order-item.mapper';
+import { OrderItemMapper } from '@order/infra/mappers/order-item.mapper';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

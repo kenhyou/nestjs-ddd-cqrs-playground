@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import request from 'supertest';
 import { OrderModule } from '@order/order.module';
@@ -14,7 +14,7 @@ describe('Order E2E', () => {
       imports: [
         TypeOrmModule.forRoot({
           type: 'better-sqlite3',
-          database: ':memory:', // ← in-memory DB
+          database: ':memory:', // in-memory DB
           entities: [OrderEntity, OrderItemEntity],
           synchronize: true,
         }),
@@ -23,6 +23,14 @@ describe('Order E2E', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    // Mirror main.ts so the e2e exercises the real validation pipeline.
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     await app.init();
   });
 
@@ -31,7 +39,7 @@ describe('Order E2E', () => {
   });
 
   it('happy path: create → addItem → confirm → ship', async () => {
-    // 1. POST /orders → orderId 받기
+    // 1. POST /orders → receive orderId
     const res = await request(app.getHttpServer())
       .post('/orders')
       .send({
@@ -41,7 +49,7 @@ describe('Order E2E', () => {
       .expect(201);
     const orderId = res.body.orderId;
 
-    // 2. POST /orders/:id/items → 아이템 추가
+    // 2. POST /orders/:id/items → add an item
     await request(app.getHttpServer())
       .post(`/orders/${orderId}/items`)
       .send({
@@ -59,7 +67,7 @@ describe('Order E2E', () => {
     await request(app.getHttpServer())
       .post(`/orders/${orderId}/ship`)
       .expect(201);
-    // 5. GET /orders/:id → 상태가 SHIPPED인지 검증
+    // 5. GET /orders/:id → verify the status is SHIPPED
     const getRes = await request(app.getHttpServer())
       .get(`/orders/${orderId}`)
       .expect(200);
@@ -68,9 +76,9 @@ describe('Order E2E', () => {
     expect(getRes.body.status).toBe('SHIPPED');
   });
 
-  it('invariant violation: SHIPPED 상태에서 cancel → 에러', async () => {
-    // 1~4 까지 진행
-    // 1. POST /orders → orderId 받기
+  it('invariant violation: cancel from SHIPPED → error', async () => {
+    // Drive the order through to SHIPPED first.
+    // 1. POST /orders → receive orderId
     const res = await request(app.getHttpServer())
       .post('/orders')
       .send({
@@ -80,7 +88,7 @@ describe('Order E2E', () => {
       .expect(201);
     const orderId = res.body.orderId;
 
-    // 2. POST /orders/:id/items → 아이템 추가
+    // 2. POST /orders/:id/items → add an item
     await request(app.getHttpServer())
       .post(`/orders/${orderId}/items`)
       .send({
@@ -101,7 +109,8 @@ describe('Order E2E', () => {
       .post(`/orders/${orderId}/ship`)
       .expect(201);
 
-    // 5. POST /orders/:id/cancel → 400/500 에러
+    // 5. POST /orders/:id/cancel → error (generic Error → 500; basic tier has no
+    //    Phase 7 exception filter, so this surfaces as 500).
     await request(app.getHttpServer())
       .post(`/orders/${orderId}/cancel`)
       .expect(500);

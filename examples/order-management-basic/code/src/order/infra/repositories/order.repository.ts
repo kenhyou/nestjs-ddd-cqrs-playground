@@ -5,7 +5,7 @@ import { OrderId } from '@order/domain/vo/order-id.vo';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderEntity } from '@order/infra/entities/order.entity';
 import { Repository } from 'typeorm';
-import { OrderMapper } from '@order/infra/mapper/order.mapper';
+import { OrderMapper } from '@order/infra/mappers/order.mapper';
 
 @Injectable()
 export class OrderRepository implements OrderRepositoryPort {

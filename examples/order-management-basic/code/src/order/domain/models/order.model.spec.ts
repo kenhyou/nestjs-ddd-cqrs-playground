@@ -2,7 +2,7 @@ import { Money } from '@order/domain/vo/money.vo';
 import { Order } from '@order/domain/models/order.model';
 import { OrderItem } from '@order/domain/models/order-item.model';
 import { OrderStatus } from '@order/domain/enums/order-status.enum';
-import { OrderId } from 'src/order/domain/vo/order-id.vo';
+import { OrderId } from '@order/domain/vo/order-id.vo';
 
 describe('Order', () => {
   describe('create', () => {

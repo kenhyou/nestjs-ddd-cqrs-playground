@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CancelOrderCommand } from 'src/order/application/commands/cancel-order.command';
-import { OrderRepositoryPort } from 'src/order/application/ports/order.repository.port';
-import { OrderId } from 'src/order/domain/vo/order-id.vo';
+import { CancelOrderCommand } from '@order/application/commands/cancel-order.command';
+import { OrderRepositoryPort } from '@order/application/ports/order.repository.port';
+import { OrderId } from '@order/domain/vo/order-id.vo';
 
 @CommandHandler(CancelOrderCommand)
 export class CancelOrderCommandHandler implements ICommandHandler<CancelOrderCommand> {

@@ -32,6 +32,7 @@ src/<bc>/
 │   ├── models/                   # aggregates + entities (.model.ts)
 │   ├── vo/                       # value objects (.vo.ts)
 │   ├── enums/                    # plain enums (.enum.ts) — status, method
+│   ├── events/                   # domain events (.event.ts) — only tiers that record events
 │   ├── factories/                # (.factory.ts)
 │   ├── services/                 # domain services
 │   └── exceptions/               # (.exception.ts)
@@ -42,7 +43,12 @@ src/<bc>/
     ├── queries/                  # <aggregate>.query.ts (read/Query Port impl)
     └── adapters/                 # cross-BC ACL adapters (only where this BC consumes another)
 src/shared/                       # framework-free cross-cutting (e.g. assert-uuid), global filter
+│   └── domain/                   # framework-free domain base classes — AggregateRoot, DomainEvent (tiers that record events)
 ```
+
+> **`domain/events/` and `shared/domain/` are only present in tiers that record Domain Events** (Advanced, or any aggregate using the outbox). Basic/Intermediate playthroughs that omit events also omit these folders.
+> Domain events are recorded by aggregates inside `domain/` (the business fact). The `@EventsHandler` classes that *react* to them live in `application/events/handlers/` — do not put handlers in `domain/events/`.
+> Domain event **payloads are primitives only** (`payload(): Record<string, unknown>`): they are serialized into the outbox and may cross a BC boundary, so no VOs leak through.
 
 Multi-BC playthroughs use **per-BC path aliases**: `@order/*`, `@payment/*`, `@shared/*` (tsconfig `paths` + Jest `moduleNameMapper`).
 
@@ -54,6 +60,8 @@ Multi-BC playthroughs use **per-BC path aliases**: `@order/*`, `@payment/*`, `@s
 |---|---|---|
 | Value Object | `<name>.vo.ts` | `money.vo.ts`, `order-id.vo.ts` |
 | Plain enum (status/method) | `<name>.enum.ts` in `domain/enums/` | `order-status.enum.ts`, `payment-method.enum.ts` |
+| Domain Event | `<name>.event.ts` in `domain/events/` | `order-confirmed.event.ts`, `payment-requested.event.ts` |
+| Domain base class | `<name>.ts` in `shared/domain/` | `aggregate-root.ts`, `domain-event.ts` |
 | Aggregate / Entity | `<name>.model.ts` | `order.model.ts`, `order-item.model.ts` |
 | Factory | `<name>.factory.ts` | `order.factory.ts` |
 | Domain Service | `<name>.ts` (descriptive) | `payment-coordinator.ts` |

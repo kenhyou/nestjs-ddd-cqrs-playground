@@ -60,7 +60,7 @@ Multi-BC playthroughs use **per-BC path aliases**: `@order/*`, `@payment/*`, `@s
 |---|---|---|
 | Value Object | `<name>.vo.ts` | `money.vo.ts`, `order-id.vo.ts` |
 | Plain enum (status/method) | `<name>.enum.ts` in `domain/enums/` | `order-status.enum.ts`, `payment-method.enum.ts` |
-| Domain Event | `<name>.event.ts` in `domain/events/` | `order-confirmed.event.ts`, `payment-requested.event.ts` |
+| Domain Event | `<name>.event.ts` in `domain/events/` (class `…Event`) | `order-confirmed.event.ts` → `OrderConfirmedEvent` |
 | Domain base class | `<name>.ts` in `shared/domain/` | `aggregate-root.ts`, `domain-event.ts` |
 | Aggregate / Entity | `<name>.model.ts` | `order.model.ts`, `order-item.model.ts` |
 | Factory | `<name>.factory.ts` | `order.factory.ts` |

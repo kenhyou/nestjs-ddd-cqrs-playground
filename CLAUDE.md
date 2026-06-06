@@ -120,30 +120,4 @@ Dependencies flow from top to bottom. Infrastructure implements Ports defined in
 
 ## Code Conventions
 
-### Domain Class Method Order
-
-Aggregate Roots and Entities under `domain/models/` follow this order.
-
-1. **Field declaration** through `private constructor` parameter properties.
-2. **Static factories** such as `static create()` and `static reconstitute()`.
-3. **Business behavior** such as `addItem()`, `confirm()`, `cancel()`, and state-transition methods.
-4. **Derived calculations / queries** such as `getTotalPrice()` and `isActive()`.
-5. **Getters** such as `getId()` and `getStatus()`.
-
-Group methods by category and leave one blank line between categories.
-
-### VO Method Order
-
-Value Objects under `domain/vo/` follow this order:
-
-1. `private constructor`
-2. `static create()` with validation
-3. `getValue()` / `getX()` getters
-4. `equals()`
-5. Domain methods such as `overlaps()` and `contains()`
-
-### Naming Rules
-
-- Existence queries: use `exists()`, not `isExists` or `doesExist`.
-- State/property booleans: use `is~` only for adjective-like states such as `isActive`, `isExpired`, and `isEmpty`.
-- Verb booleans: use the verb itself, such as `overlaps`, `contains`, and `equals`.
+Method order, VO/class skeletons, getter naming, in-class boolean naming rules, and testing conventions live in `docs/CONVENTIONS.md` — the single source of truth for code style. Consult and update it there.

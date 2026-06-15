@@ -27,6 +27,8 @@ coverage/
 .claude/cache/
 .claude/logs/
 .claude/projects/
+# journal skill local config: machine-specific output path, not shared across clones
+.claude/journal.local.json
 
 # OS
 .DS_Store

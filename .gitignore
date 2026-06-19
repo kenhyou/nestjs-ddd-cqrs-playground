@@ -21,6 +21,8 @@ coverage/
 .idea/
 *.swp
 *.swo
+# Editor settings are machine/user-specific (formatter, tsdk path) — not shared
+.vscode/settings.json
 
 # Claude Code local user-specific data. Skills and agents are project assets and remain tracked.
 .claude/settings.local.json
